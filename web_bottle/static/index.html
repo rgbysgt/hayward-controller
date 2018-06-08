@@ -1,0 +1,318 @@
+<html>
+<head>
+<title>Pool Status</title>
+<script language="javascript" type="text/javascript">
+window["$"] = function(id) {
+	return document.getElementById(id);
+}
+function setButtonState(id, state) {
+	switch(state) {
+		case 1:
+		case true:
+			$(id+"_icon").innerHTML = $("tmpl_button_on").innerHTML;
+			$(id).className = "button_lg enabled button_on";
+			break;
+		case 0:
+		case false:
+			$(id+"_icon").innerHTML = $("tmpl_button_off").innerHTML;
+			$(id).className = "button_lg enabled button_off";
+			break;
+		case -1:
+			$(id+"_icon").innerHTML = $("tmpl_button_disabled").innerHTML;
+			$(id).className = "button_lg disabled";
+			break;
+	}
+}
+
+var filterStatus = -1;
+function setFilterStatus(pFilterStatus) {
+	filterStatus = pFilterStatus;
+	setButtonState("filter_button", filterStatus);
+	$("filter_flow").className = (filterStatus ? "rotating" : "");
+}
+function toggleFilter() { 
+	var svc = new xhttp("/toggle/filter");
+	svc.responseHandler = function(response){	
+		var status=eval("(function(){return (" + response + ");})()");
+		updateStatus(status);
+	}
+	setButtonState("filter_button", -1);
+	svc.send("GET");
+}
+
+var lightStatus = -1;
+function setLightStatus(pLightStatus) {
+	lightStatus = pLightStatus;
+	setButtonState("light_button", lightStatus);
+	$("light_on").className = (lightStatus ? "visible" : "hidden");
+	$("light_off").className = (!lightStatus ? "visible" : "hidden");	
+}
+function toggleLight() { 
+	var svc = new xhttp("/toggle/lights");
+	svc.responseHandler = function(response){	
+		var status=eval("(function(){return (" + response + ");})()");
+		updateStatus(status);
+	}
+	setButtonState("light_button", -1);
+	svc.send("GET");
+}
+
+function page_load() {
+	setButtonState("filter_button", -1);
+	setButtonState("light_button", -1);
+
+	window.setInterval(getStatus, 5000);
+	getStatus();
+}
+
+var _mq = [ ];
+function enqueueMessages(mArray) {
+    for(var i=0; i++; i< mArray.length) {
+        
+    }
+}
+
+function _cycleMessages() {
+    
+}
+window.setInterval(_cycleMessages, 2000);
+
+function setPoolTemp(temp, unit) {
+	$("pool_temp").innerHTML = temp + "&#176;&nbsp;" + unit;
+}
+
+function setAirTemp(temp, unit) {
+	$("air_temp").innerHTML = temp + "&#176;&nbsp;" + unit;
+}
+function setSaltLevel(saltLevel) {
+	$("salt_level").innerText = saltLevel;
+}
+function setPoolChlorinator(chlorPerc) {
+	$("chlorinator_perc").innerText = chlorPerc;
+}
+
+function getStatus() {
+	var svc = new xhttp("/status");
+	svc.responseHandler = function(response){	
+		var status=eval("(function(){return (" + response + ");})()");
+		updateStatus(status);
+	}
+	svc.send("GET");
+}
+
+function updateStatus(status) {
+	//todo: put in last updated text
+	setAirTemp(status.air_temp, status.temp_unit);
+	setPoolTemp(status.pool_temp, status.temp_unit);
+	setSaltLevel(status.salt_level);
+	setPoolChlorinator(status.pool_chlorinator);
+
+	//todo: handle system messages
+
+	//set button states
+	setLightStatus(status.lights);
+	setFilterStatus(status.filter);
+}
+
+
+var xhttp = function(url) {
+	var _this = this;
+	var _url = url;
+	var _http = new XMLHttpRequest();
+
+	_http.onreadystatechange = function() {
+		console.log("xhttp.readystate=" + _http.readyState);
+		if(_http.readyState == 4 && _http.status==200) {
+			_this.responseHandler(_http.responseText);
+		} else if(_http.readyState==4 && _http.status!=200) {
+			_this.errorHandler();
+		}
+	};	
+
+	_this.errorHandler = function() {
+		console.log("XHTTP Error");
+	};
+
+	_this.responseHandler = function(response) {
+		window["lastHttpResponse"]=response;
+		console.log("reponse saved to window variable [default]");
+	};
+
+	_this.send = function(method) {
+	  _http.open(method, _url, true);
+	  _http.send();
+	}
+
+}
+
+</script>
+<style>
+body div {
+	font-family: lucida console;
+}
+.button_lg {
+	height: 80px;
+	width:80px;
+}
+.enabled {
+	cursor:hand;
+}
+.disabled {
+	cursor: auto;
+}
+.visible {
+	display:block;
+}
+.hidden {
+	display:none;
+}
+.button_label {
+	text-align:center;
+	font-size: 9pt;
+	cursor: inherit;
+	user-select:none;
+}
+.button_on .button_label {
+	color: green;
+}
+.button_off .button_label {
+	color: red;
+}
+.disabled .button_label {
+	color: grey;
+}
+.rotating {
+	animation-name: spin;
+	animation-timing-function: linear;
+	animation-iteration-count: infinite;
+	animation-duration: 2s;
+}
+@keyframes spin {
+	0% {transform: rotate(0deg);}
+	100% {transform: rotate(-360deg);}
+}
+</style>
+</head>
+<body onload="page_load()">
+<!-- layout base design -->
+<svg width="800" height="405">
+<!-- water fill -->
+<rect x="300" y="275" height="125" width="450" rx="10" ry="10"
+	style="fill:lightblue;stroke:black;stroke-width:3" />
+<!-- trim over top -->
+<rect x="295" y="270" height="15" width="460" style="fill:white" />
+<rect x="303" y="285" height="15" width="445" style="fill:white" />
+
+<!-- Waves -->
+<ellipse cx="331" cy="300" rx="27" ry="7" style="fill:white" />
+<ellipse cx="380" cy="300" rx="20" ry="7" style="fill:white" />
+<ellipse cx="422" cy="300" rx="20" ry="7" style="fill:white" />
+<ellipse cx="464" cy="300" rx="20" ry="7" style="fill:white" />
+<ellipse cx="506" cy="300" rx="20" ry="7" style="fill:white" />
+<ellipse cx="548" cy="300" rx="20" ry="7" style="fill:white" />
+<ellipse cx="590" cy="300" rx="20" ry="7" style="fill:white" />
+<ellipse cx="632" cy="300" rx="20" ry="7" style="fill:white" />
+<ellipse cx="674" cy="300" rx="20" ry="7" style="fill:white" />
+<ellipse cx="721" cy="300" rx="27" ry="7" style="fill:white" />
+
+<!-- intake lines -->
+<line x1="150" y1="375" x2="300" y2="375" style="stroke:black;stroke-width:2" />
+<line x1="150" y1="385" x2="300" y2="385" style="stroke:black;stroke-width:2" />
+<!-- cell-to-pool lines -->
+<line x1="255" y1="315" x2="300" y2="315" style="stroke:black;stroke-width:2" />
+<line x1="255" y1="325" x2="300" y2="325" style="stroke:black;stroke-width:2" />
+<!-- cell -->
+<ellipse cx="255" cy="320" rx="5" ry="10" style="fill:white;stroke:black;stroke-width:2" />
+<ellipse cx="250" cy="320" rx="5" ry="10" style="fill:white;stroke:black;stroke-width:2" />
+<ellipse cx="249" cy="320" rx="7" ry="14" style="fill:white;stroke:black;stroke-width:2" />
+<rect x="200" y="305" height="38" width="48" style="fill:white" />
+<line x1="191" y1="306" x2="249" y2="306" style="stroke:black;stroke-width:2" />
+<line x1="191" y1="334" x2="249" y2="334" style="stroke:black;stroke-width:2" />
+<ellipse cx="191" cy="320" rx="7" ry="14" style="fill:white;stroke:black;stroke-width:2" />
+<ellipse cx="190" cy="320" rx="5" ry="10" style="fill:white;stroke:black;stroke-width:2" />
+<ellipse cx="185" cy="320" rx="5" ry="10" style="fill:white;stroke:black;stroke-width:2" />
+<!-- pump-to-cell lines -->
+<polyline points="130,355 130,315 184,315" style="stroke:black;stroke-width:2;fill:none" />
+<polyline points="140,355 140,325 184,325" style="stroke:black;stroke-width:2;fill:none" />
+<ellipse cx="184" cy="320" rx="3" ry="5" style="fill:white;stroke:black;stroke-width:2" />
+<rect x="175" y="316" height="8" width="10" style="fill:white" />
+
+<!-- pump -->
+<ellipse cx="150" cy="375" rx="10" ry="20" style="fill:white;stroke:black;stroke-width:2" />
+<rect x="80" y="355" height="40" width="70" style="fill:white" />
+<line x1="80" y1="355" x2="150" y2="355" style="stroke:black;stroke-width:2" />
+<line x1="80" y1="395" x2="150" y2="395" style="stroke:black;stroke-width:2" />
+<ellipse cx="80" cy="375" rx="10" ry="20" style="fill:white;stroke:black;stroke-width:2" />
+
+</svg>
+<div id="air_temp" style="position:absolute;top:250px;left:510px;width:55px;height:10px;font-size:16pt">--&#176;F</div>
+<div id="pool_temp" style="position:absolute;top:350px;left:400px;width:55px;height:10px;font-size:16pt">--&#176;F</div>
+<div id="salt_level" style="position:absolute;top:350px;left:600px;width:150px;height:10px;font-size:16pt">---- PPM</div>
+<div id="chlorinator_perc" style="position:absolute;top:318px;left:208px;width:50px;height:10px;font-size:14pt;text-align:center">15%</div>
+<div id="messages" style="position:absolute;top:150px;left:170px;width:590px;height:30px;font-size:18pt;border:2px solid black;font-family:lucida console;vertical-align:middle">System Messages Here</div>
+<div id="filter_button" onclick="toggleFilter()" class="button_lg disabled" style="position:absolute;top:210px;left:80px;">
+<div id="filter_button_icon" style="z-index: 1"></div>
+<div id="filter_button_label" class="button_label" style="z-index: 2; position:absolute;top:36px;left:0px;width:80px;">FILTER</div>
+</div>
+<div id="light_button" onclick="toggleLight()" class="button_lg visible enabled" style="position:absolute;top:210px;left:300px;">
+<div id="light_button_icon" style="z-index: 1"></div>
+<div id="light_button_label" class="button_label" style="z-index: 2; position:absolute;top:36px;left:0px;width:80px;">LIGHT</div>
+</div>
+<div id="tmpl_button_on" class="button_lg visible enabled" style="position:absolute;top:0px;left:0px;display:none">
+<svg height="80" width="80">
+<circle cx="40" cy="40" r="30" style="stroke:green;stroke-width:4;fill:none" />
+<polygon points="20,0 40,40 60,0" style="fill:white" />
+<line x1="40" y1="0" x2="40" y2="25" style="stroke:green;stroke-width:4" />
+</svg>
+</div>
+<div id="tmpl_button_off" class="button_lg visible enabled" style="position:absolute;top:0px;left:0px;display:none">
+<svg height="80" width="80">
+<circle cx="40" cy="40" r="30" style="stroke:red;stroke-width:4;fill:none" />
+<polygon points="20,0 40,40 60,0" style="fill:white" />
+<line x1="40" y1="0" x2="40" y2="25" style="stroke:red;stroke-width:4" />
+</svg>
+</div>
+<div id="tmpl_button_disabled" class="button_lg visible enabled" style="position:absolute;top:0px;left:0px;display:none">
+<svg height="80" width="80">
+<circle cx="40" cy="40" r="30" style="stroke:grey;stroke-width:4;fill:none" />
+<polygon points="20,0 40,40 60,0" style="fill:white" />
+<line x1="40" y1="0" x2="40" y2="25" style="stroke:grey;stroke-width:4" />
+</svg>
+</div>
+<div id="warning_icon" class="visible" style="position:absolute;top:152px;left:100px">
+<svg height="30" width="40">
+<polygon points="20,1 1,29 39,29" style="fill:rgb(255,255,128);stroke:black;stroke-width:2" />
+<line x1="20" y1="8" x2="20" y2="20" style="stroke:black;stroke-width: 3" />
+<line x1="20" y1="22" x2="20" y2="26" style="stroke:black;stroke-width: 3" />
+</svg>
+</div>
+<div id="filter_flow" class="" style="position:absolute;top:363px;left:107px;width:40px;height:40px">
+<svg height="40" width="40">
+<circle cx="20" cy="20" r="17" style="fill:white;stroke:lightblue;stroke-width:2" />
+<circle cx="20" cy="20" r="4" style="fill:lightblue" />
+<path d="M3 20 Q 10 10, 20 20 T 37 20" style="fill:none;stroke:lightblue;stroke-width:2" />
+<path d="M20 3 Q 30 10, 20 20 T 20 37" style="fill:none;stroke:lightblue;stroke-width:2" />
+</svg>
+</div>
+<div id="light_on" class="hidden" style="position:absolute;top:320px;left:310px;">
+<svg height="40" width="20">
+<ellipse cx="0" cy="20" rx="10" ry="20" style="fill:rgb(255,255,128);stroke:grey;stroke-width:1" />
+</svg>
+</div>
+<div id="light_off" class="visible" style="position:absolute;top:320px;left:310px;">
+<svg height="40" width="20">
+<ellipse cx="0" cy="20" rx="10" ry="20" style="fill:grey;stroke:grey;stroke-width:1" />
+</svg>
+</div>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
